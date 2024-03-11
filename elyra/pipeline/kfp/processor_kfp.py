@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from typing import Union
+
 from datetime import datetime
 from enum import Enum
 from enum import unique
@@ -34,7 +34,6 @@ from typing import List
 from typing import Optional
 from typing import Set
 from urllib.parse import urlsplit
-from kubernetes.client.models import V1PodDNSConfig
 
 from autopep8 import fix_code
 from jinja2 import Environment
@@ -42,7 +41,6 @@ from jinja2 import PackageLoader
 from kfp import Client as ArgoClient
 from kfp import compiler as kfp_argo_compiler
 from kfp import components as components
-from kfp.dsl import kfp_config
 from kfp.kubernetes import common
 from kfp.kubernetes import kubernetes_executor_config_pb2 as pb
 from kubernetes import client as k8s_client
@@ -80,6 +78,8 @@ from elyra.pipeline.runtime_type import RuntimeProcessorType
 from elyra.util.cos import join_paths
 from elyra.util.kubernetes import sanitize_label_value
 from elyra.util.path import get_absolute_path
+
+from elyra.pipeline.kfp.PipelineConf import PipelineConf
 
 
 @unique
@@ -615,7 +615,7 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
         return pipeline_dsl
 
     def _compile_pipeline_dsl(
-        self, dsl: str, workflow_engine: WorkflowEngineType, output_file: str, pipeline_conf: kfp_config.KFPConfig
+        self, dsl: str, workflow_engine: WorkflowEngineType, output_file: str, pipeline_conf: PipelineConf
     ) -> None:
         """
         Compile Python DSL using the compiler for the specified workflow_engine.
@@ -996,7 +996,7 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
         self.log_pipeline_info(pipeline_name, "Pipeline processed", duration=(time.time() - t0_all))
         return workflow_tasks
 
-    def _generate_pipeline_conf(self, pipeline: Pipeline) -> kfp_config.KFPConfig:
+    def _generate_pipeline_conf(self, pipeline: Pipeline) -> PipelineConf:
         """
         Returns a KFP pipeline configuration for this pipeline, which can be empty.
 
@@ -1005,7 +1005,7 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
         """
 
         self.log.debug("Generating pipeline configuration ...")
-        pipeline_conf = kfp_config.KFPConfig()
+        pipeline_conf = PipelineConf()
 
         #
         # Gather input for container image pull secrets in support of private container image registries
@@ -1041,9 +1041,9 @@ class KfpPipelineProcessor(RuntimePipelineProcessor):
         return pipeline_conf
 
     def set_image_pull_secrets(
-        task: kfp_config.KFPConfig,
+        task: PipelineConf,
         secret_names: List[str],
-    ) -> kfp_config.KFPConfig:
+    ) -> PipelineConf:
         """Set image pull secrets for a Kubernetes task.
 
         Args:
