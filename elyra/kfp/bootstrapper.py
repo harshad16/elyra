@@ -129,7 +129,7 @@ class FileOpBase(ABC):
         t0 = time.time()
         archive_file = self.input_params.get("cos-dependencies-archive")
 
-        self.get_file_from_object_storage(archive_file)
+        self.get_file_from_object_storage(archive_file, is_tar=True)
 
         inputs = self.input_params.get("inputs")
         if inputs:
@@ -289,13 +289,17 @@ class FileOpBase(ABC):
         """
         return os.path.join(self.input_params.get("cos-directory", ""), filename)
 
-    def get_file_from_object_storage(self, file_to_get: str) -> None:
+    def get_file_from_object_storage(self, file_to_get: str, is_tar:bool=False) -> None:
         """Utility function to get files from an object storage
 
         :param file_to_get: filename
         """
-
-        object_to_get = self.get_object_storage_filename(file_to_get)
+        run_id = os.getenv("ELYRA_RUN_NAME")
+        if self.append_run_id and run_id and not is_tar:
+            object_file_with_run_id = os.path.join(run_id, file_to_get)
+            object_to_get = self.get_object_storage_filename(object_file_with_run_id)
+        else:
+            object_to_get = self.get_object_storage_filename(file_to_get)
         t0 = time.time()
         self.cos_client.fget_object(bucket_name=self.cos_bucket, object_name=object_to_get, file_path=file_to_get)
         duration = time.time() - t0
